@@ -1,13 +1,35 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
+  const { user, login } = useAuth();
+
+  useEffect(() => {
+    // If user is already logged in, redirect to activities
+    if (user) {
+      navigate('/activities');
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async (email: string, password: string) => {
+    await login(email, password);
+    navigate('/activities');
+  };
+
+  const toggleAuthMode = () => {
+    setIsSignUp(!isSignUp);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <LoginForm 
+      onLogin={handleLogin}
+      onToggleMode={toggleAuthMode}
+      isSignUp={isSignUp}
+    />
   );
 };
 
