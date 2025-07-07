@@ -19,7 +19,10 @@ interface ActivitiesProps {
 }
 
 export function Activities({ user, onLogout }: ActivitiesProps) {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<Activity[]>(() => {
+    const saved = localStorage.getItem('poolup-activities');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const navigate = useNavigate();
 
@@ -32,7 +35,9 @@ export function Activities({ user, onLogout }: ActivitiesProps) {
       participantCount: 1
     };
     
-    setActivities(prev => [...prev, newActivity]);
+    const updatedActivities = [...activities, newActivity];
+    setActivities(updatedActivities);
+    localStorage.setItem('poolup-activities', JSON.stringify(updatedActivities));
   };
 
   const handleJoinCarpool = (activityId: string) => {
@@ -47,7 +52,7 @@ export function Activities({ user, onLogout }: ActivitiesProps) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                🚗 CarpoolConnect
+                🚗 Poolup
               </h1>
               <p className="text-sm text-muted-foreground">
                 Welcome back, {user?.email}
