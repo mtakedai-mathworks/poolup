@@ -36,13 +36,23 @@ export function Scheduler({ user }: SchedulerProps) {
   const [showCapacityInput, setShowCapacityInput] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [capacity, setCapacity] = useState<number>(4);
+  const [driverCampus, setDriverCampus] = useState<string>("");
 
-  // Mock activity data - in real app, this would come from API
-  const activity = {
+  // Get activity data from localStorage
+  const getActivityData = () => {
+    const saved = localStorage.getItem('poolup-activities');
+    if (saved) {
+      const activities = JSON.parse(saved);
+      return activities.find((act: any) => act.id === activityId);
+    }
+    return null;
+  };
+
+  const activity = getActivityData() || {
     id: activityId,
-    name: "Concert at Downtown Arena",
-    date: "2024-01-15",
-    campus: "Apple Hill"
+    name: "Unknown Activity",
+    date: new Date().toISOString().split('T')[0],
+    campus: "Unknown Location"
   };
 
   const handleRoleSelection = (selectedRole: "driver" | "passenger") => {
@@ -87,7 +97,7 @@ export function Scheduler({ user }: SchedulerProps) {
   };
 
   const handleCreateDriverSlot = () => {
-    if (!selectedTime || !user) return;
+    if (!selectedTime || !user || !driverCampus) return;
 
     const newSlot: TimeSlot = {
       id: `slot-${Date.now()}`,
@@ -104,10 +114,11 @@ export function Scheduler({ user }: SchedulerProps) {
     localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
     setShowCapacityInput(false);
     setSelectedTime("");
+    setDriverCampus("");
     
     toast({
       title: "Driver slot created!",
-      description: `You're now driving at ${selectedTime} with ${capacity} passenger spots`,
+      description: `You're now driving from ${driverCampus} at ${selectedTime} with ${capacity} passenger spots`,
     });
   };
 
@@ -183,9 +194,9 @@ export function Scheduler({ user }: SchedulerProps) {
         {showCapacityInput && (
           <Card className="mb-8 shadow-elevated">
             <CardHeader>
-              <CardTitle>Set Your Car Capacity</CardTitle>
+              <CardTitle>Set Your Driver Details</CardTitle>
               <CardDescription>
-                How many passengers can you accommodate at {selectedTime}?
+                Configure your carpool details for {selectedTime}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -202,10 +213,26 @@ export function Scheduler({ user }: SchedulerProps) {
                     className="w-32"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="driverCampus">Your Campus/Starting Point</Label>
+                  <select
+                    id="driverCampus"
+                    value={driverCampus}
+                    onChange={(e) => setDriverCampus(e.target.value)}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                    required
+                  >
+                    <option value="">Select your campus</option>
+                    <option value="Apple Hill">Apple Hill</option>
+                    <option value="Lakeside">Lakeside</option>
+                    <option value="Other">Other Location</option>
+                  </select>
+                </div>
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleCreateDriverSlot}
                     className="bg-gradient-primary"
+                    disabled={!driverCampus}
                   >
                     Create Driver Slot
                   </Button>

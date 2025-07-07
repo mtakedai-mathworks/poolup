@@ -175,16 +175,13 @@ export function AddActivityModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Campus</Label>
-            <Select value={campus} onValueChange={setCampus} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select campus" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Apple Hill">Apple Hill</SelectItem>
-                <SelectItem value="Lakeside">Lakeside</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Location</Label>
+            <Input
+              value={campus}
+              onChange={(e) => setCampus(e.target.value)}
+              placeholder="Enter event location or address"
+              required
+            />
           </div>
 
           <div className="flex gap-2 justify-end">
