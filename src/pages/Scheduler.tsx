@@ -29,7 +29,10 @@ export function Scheduler({ user }: SchedulerProps) {
   const { toast } = useToast();
   
   const [isDriver, setIsDriver] = useState<boolean | null>(null);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(() => {
+    const saved = localStorage.getItem(`poolup-scheduler-${activityId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [showCapacityInput, setShowCapacityInput] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [capacity, setCapacity] = useState<number>(4);
@@ -66,13 +69,14 @@ export function Scheduler({ user }: SchedulerProps) {
     } else {
       // Passenger joining a slot
       const slot = timeSlots.find(s => s.id === slotId);
-      if (slot && slot.driverId && slot.passengers.length < (slot.capacity || 0)) {
+      if (slot && slot.driverId && slot.passengers.length < (slot.capacity || 0) && !slot.passengers.includes(user?.id || "")) {
         const updatedSlots = timeSlots.map(s => 
           s.id === slotId 
             ? { ...s, passengers: [...s.passengers, user?.id || ""] }
             : s
         );
         setTimeSlots(updatedSlots);
+        localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
         
         toast({
           title: "Joined carpool!",
@@ -95,7 +99,9 @@ export function Scheduler({ user }: SchedulerProps) {
       isAvailable: true
     };
 
-    setTimeSlots(prev => [...prev, newSlot]);
+    const updatedSlots = [...timeSlots, newSlot];
+    setTimeSlots(updatedSlots);
+    localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
     setShowCapacityInput(false);
     setSelectedTime("");
     

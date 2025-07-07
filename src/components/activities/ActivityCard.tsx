@@ -27,6 +27,16 @@ export function ActivityCard({ activity, onJoinCarpool }: ActivityCardProps) {
     });
   };
 
+  // Check if there are saved scheduler details for this activity
+  const getSchedulerData = () => {
+    const saved = localStorage.getItem(`poolup-scheduler-${activity.id}`);
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  const timeSlots = getSchedulerData();
+  const hasDrivers = timeSlots.some((slot: any) => slot.driverId);
+  const totalPassengers = timeSlots.reduce((total: number, slot: any) => total + slot.passengers.length, 0);
+
   return (
     <Card className="hover:shadow-elevated transition-all duration-300 cursor-pointer bg-gradient-card border-0">
       <CardHeader className="pb-3">
@@ -47,18 +57,26 @@ export function ActivityCard({ activity, onJoinCarpool }: ActivityCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>{activity.participantCount} participant{activity.participantCount !== 1 ? 's' : ''}</span>
+        <div className="space-y-3">
+          {hasDrivers && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>{timeSlots.length} driver{timeSlots.length !== 1 ? 's' : ''}, {totalPassengers} passenger{totalPassengers !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>{activity.participantCount} participant{activity.participantCount !== 1 ? 's' : ''}</span>
+            </div>
+            <Button 
+              onClick={() => onJoinCarpool(activity.id)}
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              size="sm"
+            >
+              {hasDrivers ? 'View Carpools' : 'Join Carpool'}
+            </Button>
           </div>
-          <Button 
-            onClick={() => onJoinCarpool(activity.id)}
-            className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-            size="sm"
-          >
-            Join Carpool
-          </Button>
         </div>
       </CardContent>
     </Card>
