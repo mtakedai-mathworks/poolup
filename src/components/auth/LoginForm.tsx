@@ -58,7 +58,7 @@ export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            🚗 CarpoolConnect
+            🚗 PoolUp!
           </CardTitle>
           <CardDescription>
             {isSignUp ? "Create your account" : "Sign in to your account"}
