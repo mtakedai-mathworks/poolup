@@ -10,6 +10,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { LocationInput } from "./LocationInput";
 
 interface AddActivityModalProps {
   open: boolean;
@@ -174,15 +175,12 @@ export function AddActivityModal({
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label>Location</Label>
-            <Input
-              value={campus}
-              onChange={(e) => setCampus(e.target.value)}
-              placeholder="Enter event location or address"
-              required
-            />
-          </div>
+          <LocationInput
+            value={campus}
+            onChange={setCampus}
+            label="Event Location"
+            placeholder="Enter event location or address"
+          />
 
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={handleCancel}>

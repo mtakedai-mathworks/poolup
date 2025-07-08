@@ -14,6 +14,7 @@ interface TimeSlot {
   time: string;
   driverId?: string;
   driverName?: string;
+  driverLocation?: string;
   capacity?: number;
   passengers: string[];
   isAvailable: boolean;
@@ -37,6 +38,7 @@ export function Scheduler({ user }: SchedulerProps) {
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [capacity, setCapacity] = useState<number>(4);
   const [driverCampus, setDriverCampus] = useState<string>("");
+  const [showDriverSelection, setShowDriverSelection] = useState<TimeSlot[]>([]);
 
   // Get activity data from localStorage
   const getActivityData = () => {
@@ -77,11 +79,19 @@ export function Scheduler({ user }: SchedulerProps) {
         }
       }
     } else {
-      // Passenger joining a slot
-      const slot = timeSlots.find(s => s.id === slotId);
-      if (slot && slot.driverId && slot.passengers.length < (slot.capacity || 0) && !slot.passengers.includes(user?.id || "")) {
+      // Passenger selecting from available drivers
+      const slotsForTime = timeSlots.filter(s => s.time === time);
+      const availableSlots = slotsForTime.filter(s => 
+        s.driverId && 
+        s.passengers.length < (s.capacity || 0) && 
+        !s.passengers.includes(user?.id || "")
+      );
+      
+      if (availableSlots.length === 1) {
+        // Only one driver available, join directly
+        const slot = availableSlots[0];
         const updatedSlots = timeSlots.map(s => 
-          s.id === slotId 
+          s.id === slot.id 
             ? { ...s, passengers: [...s.passengers, user?.id || ""] }
             : s
         );
@@ -90,8 +100,12 @@ export function Scheduler({ user }: SchedulerProps) {
         
         toast({
           title: "Joined carpool!",
-          description: `You've joined ${slot.driverName}'s carpool at ${slot.time}`,
+          description: `You've joined ${slot.driverName}'s carpool from ${slot.driverLocation} at ${slot.time}`,
         });
+      } else if (availableSlots.length > 1) {
+        // Multiple drivers available, show selection
+        setSelectedTime(time);
+        setShowDriverSelection(availableSlots);
       }
     }
   };
@@ -104,6 +118,7 @@ export function Scheduler({ user }: SchedulerProps) {
       time: selectedTime,
       driverId: user.id,
       driverName: user.email.split('@')[0],
+      driverLocation: driverCampus,
       capacity: capacity,
       passengers: [],
       isAvailable: true
@@ -186,6 +201,66 @@ export function Scheduler({ user }: SchedulerProps) {
                   </span>
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Driver Selection Modal */}
+        {showDriverSelection.length > 0 && (
+          <Card className="mb-8 shadow-elevated">
+            <CardHeader>
+              <CardTitle>Choose Your Driver</CardTitle>
+              <CardDescription>
+                Multiple drivers are available for {selectedTime}. Choose based on their starting location.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3">
+                {showDriverSelection.map((slot) => (
+                  <Button
+                    key={slot.id}
+                    variant="outline"
+                    className="h-auto p-4 flex items-center justify-between hover:shadow-glow transition-all duration-300"
+                    onClick={() => {
+                      const updatedSlots = timeSlots.map(s => 
+                        s.id === slot.id 
+                          ? { ...s, passengers: [...s.passengers, user?.id || ""] }
+                          : s
+                      );
+                      setTimeSlots(updatedSlots);
+                      localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
+                      setShowDriverSelection([]);
+                      setSelectedTime("");
+                      
+                      toast({
+                        title: "Joined carpool!",
+                        description: `You've joined ${slot.driverName}'s carpool from ${slot.driverLocation} at ${slot.time}`,
+                      });
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Car className="h-5 w-5 text-primary" />
+                      <div className="text-left">
+                        <div className="font-medium">{slot.driverName}</div>
+                        <div className="text-sm text-muted-foreground">From {slot.driverLocation}</div>
+                      </div>
+                    </div>
+                    <Badge variant="outline">
+                      {slot.passengers.length}/{slot.capacity} passengers
+                    </Badge>
+                  </Button>
+                ))}
+              </div>
+              <Button 
+                variant="outline" 
+                className="mt-4 w-full"
+                onClick={() => {
+                  setShowDriverSelection([]);
+                  setSelectedTime("");
+                }}
+              >
+                Cancel
+              </Button>
             </CardContent>
           </Card>
         )}

@@ -12,28 +12,18 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isSignUp && password !== confirmPassword) {
+    if (!firstName.trim() || !lastName.trim()) {
       toast({
-        title: "Password mismatch",
-        description: "Passwords do not match",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters",
+        title: "Missing information",
+        description: "Please enter both first and last name",
         variant: "destructive"
       });
       return;
@@ -41,11 +31,13 @@ export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
 
     setIsLoading(true);
     try {
-      await onLogin(email, password);
+      // Create a mock email for internal use
+      const mockEmail = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@poolup.internal`;
+      await onLogin(mockEmail, "internal-user");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Authentication failed",
+        description: "Login failed",
         variant: "destructive"
       });
     } finally {
@@ -61,66 +53,41 @@ export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
             🚗 PoolUp!
           </CardTitle>
           <CardDescription>
-            {isSignUp ? "Create your account" : "Sign in to your account"}
+            Enter your name to join the carpool coordination system
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="firstName">First Name</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 required
-                placeholder="Enter your email"
+                placeholder="Enter your first name"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="lastName">Last Name</Label>
               <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 required
-                placeholder="Enter your password"
+                placeholder="Enter your last name"
               />
             </div>
-            {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="Confirm your password"
-                />
-              </div>
-            )}
             <Button 
               type="submit" 
               className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300"
               disabled={isLoading}
             >
-              {isLoading ? "Loading..." : (isSignUp ? "Sign Up" : "Sign In")}
+              {isLoading ? "Loading..." : "Enter PoolUp!"}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <Button 
-              variant="ghost" 
-              onClick={onToggleMode}
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              {isSignUp 
-                ? "Already have an account? Sign in" 
-                : "Don't have an account? Sign up"
-              }
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, Car, Clock, ArrowRight } from "lucide-react";
 
 interface Activity {
   id: string;
@@ -38,43 +38,70 @@ export function ActivityCard({ activity, onJoinCarpool }: ActivityCardProps) {
   const totalPassengers = timeSlots.reduce((total: number, slot: any) => total + slot.passengers.length, 0);
 
   return (
-    <Card className="hover:shadow-elevated transition-all duration-300 cursor-pointer bg-gradient-card border-0">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold text-card-foreground">
-            {activity.name}
-          </CardTitle>
+    <Card className="group hover:shadow-elevated transition-all duration-300 cursor-pointer bg-gradient-card border border-border/50 hover:border-primary/20 relative overflow-hidden">
+      {/* Decorative gradient overlay */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-primary opacity-5 rounded-full -translate-y-16 translate-x-16 group-hover:opacity-10 transition-opacity duration-300" />
+      
+      <CardHeader className="pb-3 relative">
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors duration-300">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300">
+                {activity.name}
+              </CardTitle>
+            </div>
+          </div>
           <Badge 
-            variant={activity.campus === "Apple Hill" ? "default" : "secondary"}
-            className="text-xs"
+            variant="outline"
+            className="text-xs bg-background/50 backdrop-blur-sm border-primary/20"
           >
+            <MapPin className="h-3 w-3 mr-1" />
             {activity.campus}
           </Badge>
         </div>
+        
         <CardDescription className="flex items-center gap-2 text-sm">
-          <Calendar className="h-4 w-4" />
+          <Clock className="h-4 w-4 text-muted-foreground" />
           {formatDate(activity.date)}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-0">
+      
+      <CardContent className="pt-0 relative">
         <div className="space-y-3">
           {hasDrivers && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{timeSlots.length} driver{timeSlots.length !== 1 ? 's' : ''}, {totalPassengers} passenger{totalPassengers !== 1 ? 's' : ''}</span>
+            <div className="flex items-center gap-2 p-2 bg-success/10 rounded-lg border border-success/20">
+              <Car className="h-4 w-4 text-success" />
+              <span className="text-sm text-success-foreground">
+                {timeSlots.length} driver{timeSlots.length !== 1 ? 's' : ''} • {totalPassengers} passenger{totalPassengers !== 1 ? 's' : ''}
+              </span>
             </div>
           )}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{activity.participantCount} participant{activity.participantCount !== 1 ? 's' : ''}</span>
+          
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-2">
+              {hasDrivers ? (
+                <Badge variant="secondary" className="text-xs">
+                  <Car className="h-3 w-3 mr-1" />
+                  Active Carpools
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  <Users className="h-3 w-3 mr-1" />
+                  No drivers yet
+                </Badge>
+              )}
             </div>
+            
             <Button 
               onClick={() => onJoinCarpool(activity.id)}
-              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300 group/btn"
               size="sm"
             >
-              {hasDrivers ? 'View Carpools' : 'Join Carpool'}
+              <span>{hasDrivers ? 'View Carpools' : 'Join Carpool'}</span>
+              <ArrowRight className="h-3 w-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform duration-200" />
             </Button>
           </div>
         </div>

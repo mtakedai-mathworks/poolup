@@ -35,8 +35,8 @@ export function CalendarGrid({ timeSlots, isDriver, currentUserId, onSlotSelect 
     const slot = getSlotForTime(time);
     
     if (isDriver) {
-      // Drivers can select any empty slot
-      return !slot || !slot.driverId;
+      // Drivers can always select any slot (allows multiple drivers per time)
+      return true;
     } else {
       // Passengers can only select slots with drivers that have space
       return slot && slot.driverId && slot.passengers.length < (slot.capacity || 0);
@@ -44,22 +44,28 @@ export function CalendarGrid({ timeSlots, isDriver, currentUserId, onSlotSelect 
   };
 
   const getSlotStatus = (time: string) => {
-    const slot = getSlotForTime(time);
+    const slots = timeSlots.filter(slot => slot.time === time);
     
-    if (!slot || !slot.driverId) {
+    if (slots.length === 0) {
       return isDriver ? "available" : "unavailable";
     }
     
-    if (slot.driverId === currentUserId) {
+    // Check if current user is a driver for this time
+    const userSlot = slots.find(slot => slot.driverId === currentUserId);
+    if (userSlot) {
       return "own-slot";
     }
     
-    if (slot.passengers.includes(currentUserId)) {
+    // Check if current user is a passenger in any slot for this time
+    const joinedSlot = slots.find(slot => slot.passengers.includes(currentUserId));
+    if (joinedSlot) {
       return "joined";
     }
     
-    if (slot.passengers.length >= (slot.capacity || 0)) {
-      return "full";
+    // For passengers, check if any slot has space
+    if (!isDriver) {
+      const availableSlot = slots.find(slot => slot.passengers.length < (slot.capacity || 0));
+      return availableSlot ? "available" : "full";
     }
     
     return "available";
@@ -83,21 +89,37 @@ export function CalendarGrid({ timeSlots, isDriver, currentUserId, onSlotSelect 
   };
 
   const getSlotText = (time: string) => {
-    const slot = getSlotForTime(time);
+    const slots = timeSlots.filter(slot => slot.time === time);
     
-    if (!slot || !slot.driverId) {
-      return isDriver ? "Available" : "No driver";
+    if (slots.length === 0) {
+      return isDriver ? "Available" : "No drivers";
     }
     
-    if (slot.driverId === currentUserId) {
-      return `Your slot (${slot.passengers.length}/${slot.capacity})`;
+    // Check if current user is a driver for this time
+    const userSlot = slots.find(slot => slot.driverId === currentUserId);
+    if (userSlot) {
+      return `Your slot (${userSlot.passengers.length}/${userSlot.capacity})`;
     }
     
-    if (slot.passengers.includes(currentUserId)) {
-      return `Joined - ${slot.driverName}`;
+    // Check if current user is a passenger in any slot for this time
+    const joinedSlot = slots.find(slot => slot.passengers.includes(currentUserId));
+    if (joinedSlot) {
+      return `Joined - ${joinedSlot.driverName}`;
     }
     
-    return `${slot.driverName} (${slot.passengers.length}/${slot.capacity})`;
+    // For passengers, show available drivers with locations
+    if (!isDriver && slots.length > 0) {
+      if (slots.length === 1) {
+        const slot = slots[0];
+        const available = slot.passengers.length < (slot.capacity || 0);
+        return available ? `${slot.driverName} (${slot.passengers.length}/${slot.capacity})` : "Full";
+      } else {
+        const availableSlots = slots.filter(slot => slot.passengers.length < (slot.capacity || 0));
+        return availableSlots.length > 0 ? `${availableSlots.length} drivers available` : "All full";
+      }
+    }
+    
+    return slots.length > 0 ? `${slots.length} driver${slots.length > 1 ? 's' : ''}` : "Available";
   };
 
   return (

@@ -4,7 +4,6 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { user, login } = useAuth();
 
@@ -20,15 +19,11 @@ const Index = () => {
     navigate('/activities');
   };
 
-  const toggleAuthMode = () => {
-    setIsSignUp(!isSignUp);
-  };
-
   return (
     <LoginForm 
       onLogin={handleLogin}
-      onToggleMode={toggleAuthMode}
-      isSignUp={isSignUp}
+      onToggleMode={() => {}}
+      isSignUp={false}
     />
   );
 };
