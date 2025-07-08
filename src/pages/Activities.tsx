@@ -9,6 +9,7 @@ interface Activity {
   id: string;
   name: string;
   date: string;
+  time?: string;
   campus: "Apple Hill" | "Lakeside";
   participantCount: number;
 }
@@ -26,11 +27,12 @@ export function Activities({ user, onLogout }: ActivitiesProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const navigate = useNavigate();
 
-  const handleAddActivity = (activityData: { name: string; date: string; campus: string }) => {
+  const handleAddActivity = (activityData: { name: string; date: string; campus: string; time: string }) => {
     const newActivity: Activity = {
       id: Date.now().toString(),
       name: activityData.name,
       date: activityData.date,
+      time: activityData.time,
       campus: activityData.campus as "Apple Hill" | "Lakeside",
       participantCount: 1
     };
@@ -127,7 +129,12 @@ export function Activities({ user, onLogout }: ActivitiesProps) {
         open={showAddModal}
         onOpenChange={setShowAddModal}
         onAddActivity={handleAddActivity}
-        existingActivities={activities}
+        existingActivities={activities.map(activity => ({
+          name: activity.name,
+          date: activity.date,
+          campus: activity.campus,
+          time: activity.time || ""
+        }))}
       />
     </div>
   );

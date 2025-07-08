@@ -7,6 +7,7 @@ interface Activity {
   id: string;
   name: string;
   date: string;
+  time?: string;
   campus: "Apple Hill" | "Lakeside";
   participantCount: number;
 }
@@ -63,9 +64,17 @@ export function ActivityCard({ activity, onJoinCarpool }: ActivityCardProps) {
           </Badge>
         </div>
         
-        <CardDescription className="flex items-center gap-2 text-sm">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          {formatDate(activity.date)}
+        <CardDescription className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {formatDate(activity.date)}
+          </div>
+          {activity.time && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              {activity.time}
+            </div>
+          )}
         </CardDescription>
       </CardHeader>
       

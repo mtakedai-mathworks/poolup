@@ -3,21 +3,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, Car, Users } from "lucide-react";
-import { CalendarGrid } from "@/components/scheduler/CalendarGrid";
+import { DriverSetup } from "@/components/scheduler/DriverSetup";
+import { DriverList } from "@/components/scheduler/DriverList";
 import { useToast } from "@/hooks/use-toast";
 
-interface TimeSlot {
+interface DriverSlot {
   id: string;
   time: string;
-  driverId?: string;
-  driverName?: string;
-  driverLocation?: string;
-  capacity?: number;
+  driverId: string;
+  driverName: string;
+  location: string;
+  note?: string;
+  capacity: number;
   passengers: string[];
-  isAvailable: boolean;
 }
 
 interface SchedulerProps {
@@ -30,15 +29,11 @@ export function Scheduler({ user }: SchedulerProps) {
   const { toast } = useToast();
   
   const [isDriver, setIsDriver] = useState<boolean | null>(null);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(() => {
+  const [driverSlots, setDriverSlots] = useState<DriverSlot[]>(() => {
     const saved = localStorage.getItem(`poolup-scheduler-${activityId}`);
     return saved ? JSON.parse(saved) : [];
   });
-  const [showCapacityInput, setShowCapacityInput] = useState(false);
-  const [selectedTime, setSelectedTime] = useState<string>("");
-  const [capacity, setCapacity] = useState<number>(4);
-  const [driverCampus, setDriverCampus] = useState<string>("");
-  const [showDriverSelection, setShowDriverSelection] = useState<TimeSlot[]>([]);
+  const [showDriverSetup, setShowDriverSetup] = useState(false);
 
   // Get activity data from localStorage
   const getActivityData = () => {
@@ -54,86 +49,81 @@ export function Scheduler({ user }: SchedulerProps) {
     id: activityId,
     name: "Unknown Activity",
     date: new Date().toISOString().split('T')[0],
+    time: "",
     campus: "Unknown Location"
   };
 
   const handleRoleSelection = (selectedRole: "driver" | "passenger") => {
     setIsDriver(selectedRole === "driver");
-  };
-
-  const handleSlotSelect = (slotId: string, time: string) => {
-    if (isDriver) {
-      if (slotId.startsWith("new-")) {
-        // New driver slot
-        setSelectedTime(time);
-        setShowCapacityInput(true);
-      } else {
-        // Existing slot - allow driver to modify
-        const slot = timeSlots.find(s => s.id === slotId);
-        if (slot && slot.driverId === user?.id) {
-          // Driver can modify their own slot
-          toast({
-            title: "Modify Slot",
-            description: "Feature to modify existing slots coming soon!",
-          });
-        }
-      }
-    } else {
-      // Passenger selecting from available drivers
-      const slotsForTime = timeSlots.filter(s => s.time === time);
-      const availableSlots = slotsForTime.filter(s => 
-        s.driverId && 
-        s.passengers.length < (s.capacity || 0) && 
-        !s.passengers.includes(user?.id || "")
-      );
-      
-      if (availableSlots.length === 1) {
-        // Only one driver available, join directly
-        const slot = availableSlots[0];
-        const updatedSlots = timeSlots.map(s => 
-          s.id === slot.id 
-            ? { ...s, passengers: [...s.passengers, user?.id || ""] }
-            : s
-        );
-        setTimeSlots(updatedSlots);
-        localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
-        
-        toast({
-          title: "Joined carpool!",
-          description: `You've joined ${slot.driverName}'s carpool from ${slot.driverLocation} at ${slot.time}`,
-        });
-      } else if (availableSlots.length > 1) {
-        // Multiple drivers available, show selection
-        setSelectedTime(time);
-        setShowDriverSelection(availableSlots);
-      }
+    if (selectedRole === "driver") {
+      setShowDriverSetup(true);
     }
   };
 
-  const handleCreateDriverSlot = () => {
-    if (!selectedTime || !user || !driverCampus) return;
+  const handleCreateDriverSlot = (data: {
+    time: string;
+    location: string;
+    note: string;
+    capacity: number;
+  }) => {
+    if (!user) return;
 
-    const newSlot: TimeSlot = {
+    const newSlot: DriverSlot = {
       id: `slot-${Date.now()}`,
-      time: selectedTime,
+      time: data.time,
       driverId: user.id,
       driverName: user.email.split('@')[0],
-      driverLocation: driverCampus,
-      capacity: capacity,
-      passengers: [],
-      isAvailable: true
+      location: data.location,
+      note: data.note,
+      capacity: data.capacity,
+      passengers: []
     };
 
-    const updatedSlots = [...timeSlots, newSlot];
-    setTimeSlots(updatedSlots);
+    const updatedSlots = [...driverSlots, newSlot];
+    setDriverSlots(updatedSlots);
     localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
-    setShowCapacityInput(false);
-    setSelectedTime("");
-    setDriverCampus("");
+    setShowDriverSetup(false);
     
     toast({
       title: "Driver slot created!",
-      description: `You're now driving from ${driverCampus} at ${selectedTime} with ${capacity} passenger spots`,
+      description: `You're now driving from ${data.location} at ${data.time} with ${data.capacity} passenger spots`,
+    });
+  };
+
+  const handleJoinDriver = (slotId: string) => {
+    if (!user) return;
+
+    const updatedSlots = driverSlots.map(slot => 
+      slot.id === slotId 
+        ? { ...slot, passengers: [...slot.passengers, user.id] }
+        : slot
+    );
+    setDriverSlots(updatedSlots);
+    localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
+    
+    const slot = driverSlots.find(s => s.id === slotId);
+    if (slot) {
+      toast({
+        title: "Joined carpool!",
+        description: `You've joined ${slot.driverName}'s carpool from ${slot.location} at ${slot.time}`,
+      });
+    }
+  };
+
+  const handleLeaveDriver = (slotId: string) => {
+    if (!user) return;
+
+    const updatedSlots = driverSlots.map(slot => 
+      slot.id === slotId 
+        ? { ...slot, passengers: slot.passengers.filter(id => id !== user.id) }
+        : slot
+    );
+    setDriverSlots(updatedSlots);
+    localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
+    
+    toast({
+      title: "Left carpool",
+      description: "You've left the carpool",
     });
   };
 
@@ -159,7 +149,8 @@ export function Scheduler({ user }: SchedulerProps) {
             <div>
               <h1 className="text-xl font-bold text-foreground">{activity.name}</h1>
               <p className="text-sm text-muted-foreground">
-                {new Date(activity.date).toLocaleDateString()} • {activity.campus}
+                {new Date(activity.date).toLocaleDateString()}
+                {activity.time && ` • ${activity.time}`} • {activity.campus}
               </p>
             </div>
           </div>
@@ -205,136 +196,26 @@ export function Scheduler({ user }: SchedulerProps) {
           </Card>
         )}
 
-        {/* Driver Selection Modal */}
-        {showDriverSelection.length > 0 && (
-          <Card className="mb-8 shadow-elevated">
-            <CardHeader>
-              <CardTitle>Choose Your Driver</CardTitle>
-              <CardDescription>
-                Multiple drivers are available for {selectedTime}. Choose based on their starting location.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                {showDriverSelection.map((slot) => (
-                  <Button
-                    key={slot.id}
-                    variant="outline"
-                    className="h-auto p-4 flex items-center justify-between hover:shadow-glow transition-all duration-300"
-                    onClick={() => {
-                      const updatedSlots = timeSlots.map(s => 
-                        s.id === slot.id 
-                          ? { ...s, passengers: [...s.passengers, user?.id || ""] }
-                          : s
-                      );
-                      setTimeSlots(updatedSlots);
-                      localStorage.setItem(`poolup-scheduler-${activityId}`, JSON.stringify(updatedSlots));
-                      setShowDriverSelection([]);
-                      setSelectedTime("");
-                      
-                      toast({
-                        title: "Joined carpool!",
-                        description: `You've joined ${slot.driverName}'s carpool from ${slot.driverLocation} at ${slot.time}`,
-                      });
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Car className="h-5 w-5 text-primary" />
-                      <div className="text-left">
-                        <div className="font-medium">{slot.driverName}</div>
-                        <div className="text-sm text-muted-foreground">From {slot.driverLocation}</div>
-                      </div>
-                    </div>
-                    <Badge variant="outline">
-                      {slot.passengers.length}/{slot.capacity} passengers
-                    </Badge>
-                  </Button>
-                ))}
-              </div>
-              <Button 
-                variant="outline" 
-                className="mt-4 w-full"
-                onClick={() => {
-                  setShowDriverSelection([]);
-                  setSelectedTime("");
-                }}
-              >
-                Cancel
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Driver Setup */}
+        {showDriverSetup && (
+          <DriverSetup
+            onCreateSlot={handleCreateDriverSlot}
+            onCancel={() => setShowDriverSetup(false)}
+          />
         )}
 
-        {/* Capacity Input Modal */}
-        {showCapacityInput && (
-          <Card className="mb-8 shadow-elevated">
-            <CardHeader>
-              <CardTitle>Set Your Driver Details</CardTitle>
-              <CardDescription>
-                Configure your carpool details for {selectedTime}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">Number of Passengers</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    min="1"
-                    max="8"
-                    value={capacity}
-                    onChange={(e) => setCapacity(Number(e.target.value))}
-                    className="w-32"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="driverCampus">Your Campus/Starting Point</Label>
-                  <select
-                    id="driverCampus"
-                    value={driverCampus}
-                    onChange={(e) => setDriverCampus(e.target.value)}
-                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                    required
-                  >
-                    <option value="">Select your campus</option>
-                    <option value="Apple Hill">Apple Hill</option>
-                    <option value="Lakeside">Lakeside</option>
-                    <option value="Other">Other Location</option>
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleCreateDriverSlot}
-                    className="bg-gradient-primary"
-                    disabled={!driverCampus}
-                  >
-                    Create Driver Slot
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowCapacityInput(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Calendar Grid */}
-        {isDriver !== null && !showCapacityInput && (
-          <CalendarGrid
-            timeSlots={timeSlots}
-            isDriver={isDriver}
+        {/* Driver List for Passengers */}
+        {isDriver === false && !showDriverSetup && (
+          <DriverList
+            drivers={driverSlots}
             currentUserId={user.id}
-            onSlotSelect={handleSlotSelect}
+            onJoinDriver={handleJoinDriver}
+            onLeaveDriver={handleLeaveDriver}
           />
         )}
 
         {/* Current Status */}
-        {isDriver !== null && (
+        {isDriver !== null && !showDriverSetup && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -347,17 +228,17 @@ export function Scheduler({ user }: SchedulerProps) {
             <CardContent>
               {isDriver ? (
                 <div>
-                  {timeSlots.filter(slot => slot.driverId === user.id).length === 0 ? (
+                  {driverSlots.filter(slot => slot.driverId === user.id).length === 0 ? (
                     <p className="text-muted-foreground">
-                      Select a time slot above to start offering rides.
+                      Set up your driver details above to start offering rides.
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {timeSlots
+                      {driverSlots
                         .filter(slot => slot.driverId === user.id)
                         .map(slot => (
                           <div key={slot.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                            <span className="font-medium">Driving at {slot.time}</span>
+                            <span className="font-medium">Driving from {slot.location} at {slot.time}</span>
                             <Badge variant="outline">
                               {slot.passengers.length}/{slot.capacity} passengers
                             </Badge>
@@ -368,13 +249,13 @@ export function Scheduler({ user }: SchedulerProps) {
                 </div>
               ) : (
                 <div>
-                  {timeSlots.filter(slot => slot.passengers.includes(user.id)).length === 0 ? (
+                  {driverSlots.filter(slot => slot.passengers.includes(user.id)).length === 0 ? (
                     <p className="text-muted-foreground">
-                      Select an available time slot above to join a carpool.
+                      Choose a driver from the list above to join a carpool.
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {timeSlots
+                      {driverSlots
                         .filter(slot => slot.passengers.includes(user.id))
                         .map(slot => (
                           <div key={slot.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">

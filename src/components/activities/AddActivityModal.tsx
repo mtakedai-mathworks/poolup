@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -15,8 +15,8 @@ import { LocationInput } from "./LocationInput";
 interface AddActivityModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddActivity: (activity: { name: string; date: string; campus: string }) => void;
-  existingActivities: Array<{ name: string; date: string; campus: string }>;
+  onAddActivity: (activity: { name: string; date: string; campus: string; time: string }) => void;
+  existingActivities: Array<{ name: string; date: string; campus: string; time: string }>;
 }
 
 export function AddActivityModal({ 
@@ -27,6 +27,7 @@ export function AddActivityModal({
 }: AddActivityModalProps) {
   const [name, setName] = useState("");
   const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState("");
   const [campus, setCampus] = useState("");
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [conflictActivity, setConflictActivity] = useState<any>(null);
@@ -35,7 +36,7 @@ export function AddActivityModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !date || !campus) {
+    if (!name || !date || !campus || !time) {
       toast({
         title: "Missing fields",
         description: "Please fill in all fields",
@@ -47,7 +48,8 @@ export function AddActivityModal({
     const activityData = {
       name: name.trim(),
       date: date.toISOString().split('T')[0],
-      campus
+      campus,
+      time
     };
 
     // Check for conflicts
@@ -55,7 +57,8 @@ export function AddActivityModal({
       activity => 
         activity.name.toLowerCase() === activityData.name.toLowerCase() &&
         activity.date === activityData.date &&
-        activity.campus === activityData.campus
+        activity.campus === activityData.campus &&
+        activity.time === activityData.time
     );
 
     if (conflict) {
@@ -92,6 +95,7 @@ export function AddActivityModal({
   const resetForm = () => {
     setName("");
     setDate(undefined);
+    setTime("");
     setCampus("");
     setConflictActivity(null);
   };
@@ -147,32 +151,49 @@ export function AddActivityModal({
             />
           </div>
           
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                  className="pointer-events-auto"
-                  disabled={(date) => date < new Date()}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="time">Event Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="pl-10"
+                  required
                 />
-              </PopoverContent>
-            </Popover>
+              </div>
+            </div>
           </div>
 
           <LocationInput
