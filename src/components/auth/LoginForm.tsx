@@ -32,7 +32,7 @@ export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
     setIsLoading(true);
     try {
       // Create a mock email for internal use
-      const mockEmail = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@poolup.internal`;
+      const mockEmail = `${firstName.toLowerCase()} ${lastName.toLowerCase()}`;
       await onLogin(mockEmail, "internal-user");
     } catch (error) {
       toast({
