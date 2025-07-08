@@ -52,7 +52,7 @@ export function Activities({ user, onLogout }: ActivitiesProps) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                🚗 Poolup
+                🚗 PoolUp!
               </h1>
               <p className="text-sm text-muted-foreground">
                 Welcome back, {user?.email}
