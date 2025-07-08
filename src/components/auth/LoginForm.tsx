@@ -48,7 +48,7 @@ export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
-      <HeroAnimation />
+{/*       <HeroAnimation /> */}
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
