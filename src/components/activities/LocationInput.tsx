@@ -19,10 +19,6 @@ export function LocationInput({ value, onChange, placeholder, label }: LocationI
   const predefinedLocations = [
     "Apple Hill Campus",
     "Lakeside Campus", 
-    "Downtown Arena",
-    "City Convention Center",
-    "University Stadium",
-    "Town Square"
   ];
 
   const handlePredefinedSelect = (location: string) => {
