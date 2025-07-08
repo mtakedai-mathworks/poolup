@@ -78,14 +78,14 @@ export function Activities({ user, onLogout }: ActivitiesProps) {
               Organize and join carpools for events and activities
             </p>
           </div>
-          <Button 
+          {activities.length > 0 && <Button 
             onClick={() => setShowAddModal(true)}
             className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
             size="lg"
           >
             <Plus className="mr-2 h-5 w-5" />
             Add Activity
-          </Button>
+          </Button>}
         </div>
 
         {/* Activities Grid */}
