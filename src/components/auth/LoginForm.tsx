@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import HeroAnimation from "@/components/auth/HeroAnimation";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void;
@@ -47,6 +48,7 @@ export function LoginForm({ onLogin, onToggleMode, isSignUp }: LoginFormProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
+      <HeroAnimation />
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
